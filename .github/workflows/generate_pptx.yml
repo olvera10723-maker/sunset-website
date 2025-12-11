@@ -1,0 +1,41 @@
+name: Generate PPTX briefing
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - briefing-pptx
+    paths:
+      - 'SunsetMovies_Briefing.md'
+      - 'images/**'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install pandoc
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y pandoc
+
+      - name: Generate PPTX
+        run: |
+          mkdir -p out
+          pandoc SunsetMovies_Briefing.md -o out/SunsetMovies_Briefing.pptx --resource-path=.:images --slide-level=2
+
+      - name: Upload generated pptx as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SunsetMovies_Briefing_pptx
+          path: out/SunsetMovies_Briefing.pptx
+
+      - name: Commit generated PPTX (optional)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add out/SunsetMovies_Briefing.pptx || true
+          git commit -m "chore: add generated PPTX (SunsetMovies_Briefing.pptx)" || echo "no changes to commit"
+          git push origin HEAD:briefing-pptx || echo "push failed"
